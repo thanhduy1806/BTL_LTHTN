@@ -12,7 +12,7 @@ typedef struct {
     TokenType type;
     union {
         float operand;
-        char operator;
+        char operator[5];
         float variable;
     } value;
 } Token;
