@@ -11,16 +11,16 @@ float evaluatePostfix(Token *postfix, float x_value) {
     int index_post = 0;
     int index_arr = 0;
     float arr[100];
-    printf("SO PHAN TU TRONG TOKEN %d\n",outputIndex);
+    //printf("SO PHAN TU TRONG TOKEN %d\n",outputIndex);
     while ( index_post < outputIndex ){
         if (postfix[index_post].type == OPERAND ){
             arr[index_arr] = postfix[index_post].value.operand;
-            printf("GIA TRI CUA STACK HIEN TAI %f\n",arr[index_arr]);
+            //printf("GIA TRI CUA STACK HIEN TAI %f\n",arr[index_arr]);
             index_arr ++;
         }
         else if (postfix[index_post].type == VARIABLE){
             arr[index_arr] = x_value;
-            printf("GIA TRI CUA STACK HIEN TAI %f\n",arr[index_arr]);
+            //printf("GIA TRI CUA STACK HIEN TAI %f\n",arr[index_arr]);
             index_arr ++;
         }
         else if (postfix[index_post].type == OPERATOR){
@@ -78,7 +78,7 @@ float evaluatePostfix(Token *postfix, float x_value) {
                 //continue;
             }
             else if (strcmp(postfix[index_post].value.operator, "cos") == 0){
-                printf("CO HAM COS THUC HIEN cos(%f)= %f\n",a,cos(a));
+                //printf("CO HAM COS THUC HIEN cos(%f)= %f\n",a,cos(a));
                 arr[index_arr++] = cos(a);
                 //printf("GIA TRI CUA STACK HIEN TAI %f\n",arr[index_arr--]);
                 //break;

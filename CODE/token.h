@@ -17,4 +17,13 @@ typedef struct {
     } value;
 } Token;
 
+
+int isOperator(char c);
+int isTrigoFunction(const char *str);
+Token *infixToPostfix(char* myFunction);
+void printTokens(Token *output);
+int findDegree(Token *output, int length);
+
+
+
 #endif 

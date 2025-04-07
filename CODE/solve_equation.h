@@ -12,5 +12,7 @@ float derivative(Token *postfix, float x);
 float nthDerivative(Token *postfix, float x, int m);
 int multipleroot(Token *postfix, float x);
 float secondDerivative(Token *postfix, float x);
+float Laguerre(Token *postfix,int degree,float x0);
+double brent(Token *postfix,double a, double b, double tol);
 
 #endif
