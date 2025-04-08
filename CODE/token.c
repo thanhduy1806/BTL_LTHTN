@@ -33,7 +33,6 @@ int precedence(const char *op) {
 Token *infixToPostfix(char* myFunction){
     state_t current_state = S_START;
     Token *output = (Token *)malloc(MAX * sizeof(Token));
-    
     char *stack[MAX];
     int stackTop = -1;
     outputIndex = 0;
@@ -259,7 +258,7 @@ int findDegree(Token *output, int length) {
             if (output[i].type == OPERAND) {
                 if (strcmp(output[i+1].value.operator, "^") == 0){
                     stack[++top] = output[i].value.operand;
-                    printf("PHIA SAO SO NAY CO DAU MU\n");
+                    //printf("PHIA SAO SO NAY CO DAU MU\n");
                     //stack[++top] = output[i].value.operand;
                 }
                 // Số thực có bậc 0
@@ -271,22 +270,22 @@ int findDegree(Token *output, int length) {
             } 
             else if (output[i].type == OPERATOR) {
                 if (top < 1) {  
-                    printf("Lỗi: Stack không đủ phần tử cho toán tử %s.\n", output[i].value.operator);
+                    //printf("Lỗi: Stack không đủ phần tử cho toán tử %s.\n", output[i].value.operator);
                     return -1;
                 }
     
                 if (strcmp(output[i].value.operator, "^") == 0) {
                     int exponent = stack[top--];  // Bậc của số mũ
                     int base = stack[top];        // Bậc của cơ số
-                    printf("BASE = %d, exponent = %d\n",base,exponent);
+                    //printf("BASE = %d, exponent = %d\n",base,exponent);
                     if (exponent < 0) {
-                        printf("Lỗi: Không hỗ trợ số mũ âm.\n");
+                        //printf("Lỗi: Không hỗ trợ số mũ âm.\n");
                         return -1;
                     }
     
                     // Nếu cơ số là biến (x), nhân bậc với số mũ
                     stack[top] = base * exponent;
-                    printf("BAC DANG CO TRONG STACK %d\n",stack[top]); 
+                    //printf("BAC DANG CO TRONG STACK %d\n",stack[top]); 
                 } 
                 else if (strcmp(output[i].value.operator, "*") == 0) {
                     int operand1 = stack[top--];
@@ -299,7 +298,7 @@ int findDegree(Token *output, int length) {
                     stack[top] = operand1 > operand2 ? operand1 : operand2;  // Cộng/trừ lấy bậc lớn nhất
                 }
                 else {
-                    printf("Lỗi: Toán tử không hợp lệ [%s]\n", output[i].value.operator);
+                    //printf("Lỗi: Toán tử không hợp lệ [%s]\n", output[i].value.operator);
                     return -1;
                 }
             }

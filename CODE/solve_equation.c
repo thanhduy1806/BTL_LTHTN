@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <pthread.h>
 #include "token.h"
 #include "solve_equation.h"
 #include "evaluate.h"
@@ -64,12 +65,23 @@ int isDuplicate(float root) {
  float bisectionMethod(Token *postfix, float x1, float x2){
     float c;
     float fx1,fx2,fxc;
+    float step = 0.1;
     int i = 0;
     int max = 100;
     fx1 = evaluatePostfix(postfix, x1);
     fx2 = evaluatePostfix(postfix, x2);
     if (fx1 == 0) return x1;
     if (fx2 == 0) return x2;
+
+    if (!(fx1*fx2<0)){
+        while(x1<x2){
+            x1 = x1 + step;
+            fx1 = evaluatePostfix(postfix, x1);
+            if (fx1 * fx2 <= 0) break;
+        }
+    }
+
+
     while (i < max){
 
         c = (x1+x2)/2;
@@ -81,7 +93,7 @@ int isDuplicate(float root) {
             x2=c;
             fx2=fxc;
         }
-        if (fx2*fxc < 0){
+        else if (fx2*fxc < 0){
             x1=c;
             fx1=fxc;
         }
@@ -179,6 +191,15 @@ float newtonRaphson(Token *postfix, float x0, int m){
 
 float Laguerre(Token *postfix, int degree, float x0) {
     int i = 0;
+    for (float x = x0; x < 10; x += 0.1) {
+        float fx1 = evaluatePostfix(postfix, x);
+        float fx2 = evaluatePostfix(postfix, x + 0.1);
+        if (fx1 * fx2 <= 0) {
+            x0 = (x + x + 0.1) / 2;
+            // Dùng x0 này cho Newton hoặc Laguerre
+        }
+    }
+    
     while (i < 100) {
         float fx0 = evaluatePostfix(postfix, x0);
         float dfx = derivative(postfix, x0);
@@ -214,48 +235,57 @@ float Laguerre(Token *postfix, int degree, float x0) {
 }
 
 
-// Thuật toán Brent
-double brent(Token *postfix,double a, double b, double tol) {
-    double fa = evaluatePostfix(postfix,a);
-    double fb = evaluatePostfix(postfix,b);
-    if (fa * fb > 0) {
-        printf("Không có nghiệm trong khoảng này!\n");
-        return NAN;
+double brent(Token *postfix, double a, double b, double tol) {
+    double fa = evaluatePostfix(postfix, a);
+    double fb = evaluatePostfix(postfix, b);
+
+    if (fa * fb > 0) return NAN;
+
+    if (fabs(fa) < fabs(fb)) {
+        // Đảm bảo fa luôn lớn hơn để tối ưu
+        double temp = a; a = b; b = temp;
+        temp = fa; fa = fb; fb = temp;
     }
 
-    double c = a, fc = fa, d = b - a, e = d;
-    double s, fs;
-    
-    while (fabs(b - a) > tol) {
+    double c = a;
+    double fc = fa;
+    double d = b - a;
+    double e = d;
+
+    for (int iter = 0; iter < 100; iter++) {
         if (fabs(fc) < fabs(fb)) {
             a = b; b = c; c = a;
             fa = fb; fb = fc; fc = fa;
         }
 
-        double tol1 = 2.0 * tol * fabs(b) + 0.5 * tol;
+        double tol1 = 2 * tol * fabs(b) + 1e-10;
         double xm = 0.5 * (c - b);
 
-        if (fabs(xm) <= tol1 || fb == 0.0)
+        if (fabs(xm) <= tol1 || fb == 0.0) {
             return b;
+        }
 
         if (fabs(e) >= tol1 && fabs(fa) > fabs(fb)) {
-            double p, q, r;
-            s = b - fb * (b - a) / (fb - fa);
+            // Nội suy
+            double s = fb / fa;
+            double p, q;
 
-            if (a != c) { // Nội suy bậc 2
-                q = fa / fc;
-                r = fb / fc;
-                p = q * (r * (c - b) - (1.0 - r) * (b - a));
-                q = (r - 1.0) * (q - 1.0) * (r - q);
-            } else { // Cát tuyến
-                p = (b - a) * fb / (fb - fa);
-                q = 1.0;
+            if (a == c) {
+                // Cát tuyến
+                p = 2 * xm * s;
+                q = 1.0 - s;
+            } else {
+                // Nội suy bậc 2
+                double q1 = fa / fc;
+                double r = fb / fc;
+                p = s * (2 * xm * q1 * (q1 - r) - (b - a) * (r - 1));
+                q = (q1 - 1) * (r - 1) * (q1 - r);
             }
 
             if (p > 0) q = -q;
             p = fabs(p);
 
-            if (2.0 * p < fmin(3.0 * xm * q - fabs(tol1 * q), fabs(e * q))) {
+            if (2 * p < fmin(3 * xm * q - fabs(tol1 * q), fabs(e * q))) {
                 e = d;
                 d = p / q;
             } else {
@@ -270,16 +300,45 @@ double brent(Token *postfix,double a, double b, double tol) {
         a = b;
         fa = fb;
 
-        if (fabs(d) > tol1)
+        if (fabs(d) > tol1) {
             b += d;
-        else
+        } else {
             b += (xm > 0 ? tol1 : -tol1);
+        }
 
-        fb = evaluatePostfix(postfix,b);
+        fb = evaluatePostfix(postfix, b);
+        fc = evaluatePostfix(postfix, c);
     }
 
-    return b;
+    return NAN; // Nếu không hội tụ sau 100 bước
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -310,109 +369,109 @@ Phân tích vấn đề:
 
 
 
-void FindAllRoot_newton(Token *postfix){
-    int num = 0;
-    float root;
-    double step = 0.1;
-    double x1,x2;
-    double fx1,fx2;
-    int start = -100;
-    int stop = 100;
-    count_roots = 0;
-    x1 = start;
-    int i =0;
-    while (strcmp(postfix[i].value.operator, "E") != 0) {
-        if (strcmp(postfix[i].value.operator, "sin")==0 || strcmp(postfix[i].value.operator, "cos")==0 || strcmp(postfix[i].value.operator, "tan")==0){
-           start = -3.14; // -pi 
-           stop = 3.14; // pi
-           break;
-        }
-        i++;
-    }
-    while (x1 < stop){
+// void FindAllRoot_newton(Token *postfix){
+//     int num = 0;
+//     float root;
+//     double step = 0.1;
+//     double x1,x2;
+//     double fx1,fx2;
+//     int start = -100;
+//     int stop = 100;
+//     count_roots = 0;
+//     x1 = start;
+//     int i =0;
+//     while (strcmp(postfix[i].value.operator, "E") != 0) {
+//         if (strcmp(postfix[i].value.operator, "sin")==0 || strcmp(postfix[i].value.operator, "cos")==0 || strcmp(postfix[i].value.operator, "tan")==0){
+//            start = -3.14; // -pi 
+//            stop = 3.14; // pi
+//            break;
+//         }
+//         i++;
+//     }
+//     while (x1 < stop){
 
-        fx1 = evaluatePostfix(postfix,x1);
-        x2 = x1 + step;
-        fx2 = evaluatePostfix(postfix,x2);
+//         fx1 = evaluatePostfix(postfix,x1);
+//         x2 = x1 + step;
+//         fx2 = evaluatePostfix(postfix,x2);
 
-        if (fx1*fx2<0){
-            root = newtonRaphson(postfix,(x1+x2)/2,1);
-            printf("NGHIEM THU %d CUA NEWTON LA: %lf\n",num,root);
-        }
+//         if (fx1*fx2<0){
+//             root = newtonRaphson(postfix,(x1+x2)/2,1);
+//             printf("NGHIEM THU %d CUA NEWTON LA: %lf\n",num,root);
+//         }
 
-        else if (fabs(fx1) < 1e-7 ){
-            root = newtonRaphson(postfix,x1,1);
-            printf("NGHIEM THU %d CUA NEWTON LA: %lf\n",num,root);
-        }
+//         else if (fabs(fx1) < 1e-7 ){
+//             root = newtonRaphson(postfix,x1,1);
+//             printf("NGHIEM THU %d CUA NEWTON LA: %lf\n",num,root);
+//         }
 
-        else if (fabs(fx2) < 1e-7 && fabs(fx2)<fabs(fx1)){
-            root = newtonRaphson(postfix,x2,1);
-            printf("NGHIEM THU %d CUA NEWTON LA: %lf\n",num,root);
-        }
+//         else if (fabs(fx2) < 1e-7 && fabs(fx2)<fabs(fx1)){
+//             root = newtonRaphson(postfix,x2,1);
+//             printf("NGHIEM THU %d CUA NEWTON LA: %lf\n",num,root);
+//         }
 
-        else{
-            root = NAN;
-        }
+//         else{
+//             root = NAN;
+//         }
 
-        // if(!isnan(root)&&!isDuplicate(root)){
-        //     int m = multipleroot(postfix, root); // Xác định bội số của nghiệm
-        //     if (m%2 == 0) {
-        //         type_root[count_roots] = 'd';  // Nghiệm kép hoặc bội
-        //     } else {
-        //         type_root[count_roots] = 's';  // Nghiệm đơn
-        //     }
-        //     roots[count_roots] = root;
-        //     count_roots++;
-        // }
-        x1 = x2;
-        num ++;
-    }
-}
+//         // if(!isnan(root)&&!isDuplicate(root)){
+//         //     int m = multipleroot(postfix, root); // Xác định bội số của nghiệm
+//         //     if (m%2 == 0) {
+//         //         type_root[count_roots] = 'd';  // Nghiệm kép hoặc bội
+//         //     } else {
+//         //         type_root[count_roots] = 's';  // Nghiệm đơn
+//         //     }
+//         //     roots[count_roots] = root;
+//         //     count_roots++;
+//         // }
+//         x1 = x2;
+//         num ++;
+//     }
+// }
 
 
-void FindAllRoots_Bisection(Token *postfix) {
-    double step = 0.5;  // Khoảng chia nhỏ
-    double x1, x2, fx1, fx2, root;
-    int i = 0;
-    float start = -100, stop = 100;
-    while (strcmp(postfix[i].value.operator, "E") != 0) {
-        if (strcmp(postfix[i].value.operator, "sin")==0 || strcmp(postfix[i].value.operator, "cos")==0 || strcmp(postfix[i].value.operator, "tan")==0){
-           start = -3.14; // -2pi 
-           stop = 3.14; // 2pi
-           break;
-        }
-        i++;
-    }
+// void FindAllRoots_Bisection(Token *postfix) {
+//     double step = 0.5;  // Khoảng chia nhỏ
+//     double x1, x2, fx1, fx2, root;
+//     int i = 0;
+//     float start = -100, stop = 100;
+//     while (strcmp(postfix[i].value.operator, "E") != 0) {
+//         if (strcmp(postfix[i].value.operator, "sin")==0 || strcmp(postfix[i].value.operator, "cos")==0 || strcmp(postfix[i].value.operator, "tan")==0){
+//            start = -3.14; // -2pi 
+//            stop = 3.14; // 2pi
+//            break;
+//         }
+//         i++;
+//     }
     
-    count_roots = 0;
+//     count_roots = 0;
 
-    x1 = start;
-    while (x1 < stop) {
-        fx1 = evaluatePostfix(postfix, x1);
-        x2 = x1 + step;
-        fx2 = evaluatePostfix(postfix, x2);
+//     x1 = start;
+//     while (x1 < stop) {
+//         fx1 = evaluatePostfix(postfix, x1);
+//         x2 = x1 + step;
+//         fx2 = evaluatePostfix(postfix, x2);
 
-        if (fx1 * fx2 < 0) {  // Nếu dấu đổi, gọi Bisection
-            root = bisectionMethod(postfix,x1,x2);
-        } else if (fabs(fx1) < 1e-6) {  // Nếu x1 gần nghiệm
-            root = x1;
-        } else if (fabs(fx2) < 1e-6) {  // Nếu x2 gần nghiệm
-            root = x2;
-        } else {
-            root = NAN;
-        }
+//         if (fx1 * fx2 < 0) {  // Nếu dấu đổi, gọi Bisection
+//             root = bisectionMethod(postfix,x1,x2);
+//         } else if (fabs(fx1) < 1e-6) {  // Nếu x1 gần nghiệm
+//             root = x1;
+//         } else if (fabs(fx2) < 1e-6) {  // Nếu x2 gần nghiệm
+//             root = x2;
+//         } else {
+//             root = NAN;
+//         }
 
-        if (!isnan(root) && !isDuplicate(root)) {
-            int m = multipleroot(postfix, root); // Xác định bội số của nghiệm
-            if (m%2 == 0) {
-                type_root[count_roots] = 'd';  // Nghiệm kép hoặc bội
-            } else {
-                type_root[count_roots] = 's';  // Nghiệm đơn
-            }
-            roots[count_roots] = root;
-            count_roots++;
-        }
+//         if (!isnan(root) && !isDuplicate(root)) {
+//             int m = multipleroot(postfix, root); // Xác định bội số của nghiệm
+//             if (m%2 == 0) {
+//                 type_root[count_roots] = 'd';  // Nghiệm kép hoặc bội
+//             } else {
+//                 type_root[count_roots] = 's';  // Nghiệm đơn
+//             }
+//             roots[count_roots] = root;
+//             count_roots++;
+//         }
 
-        x1 = x2;  // Chuyển sang đoạn tiếp theo
-    }
-}
+//         x1 = x2;  // Chuyển sang đoạn tiếp theo
+//     }
+// }
