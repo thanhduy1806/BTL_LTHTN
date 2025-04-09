@@ -3,6 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
+#include "he_phuong_trinh.h"
 #define MAX 100
 
 float arr[5][5];
@@ -79,7 +80,7 @@ void solve_x(int step, float arr[][5], float x[5]){
 
 
 
-void main(){
+void SystemEquation(){
     int step;
     printf("Nhập bậc hệ phương trình: ");
     scanf("%d",&step);

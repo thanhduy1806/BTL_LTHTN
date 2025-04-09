@@ -11,10 +11,12 @@
 #include "solve_equation.h"
 #include "global_variable.h"
 #include "evaluate.h"
+#include "he_phuong_trinh.h"
+
 #define MAX 100
 #define NUM_THREAD 4
 
-typedef enum {INPUT, OPTION, CALC, SOLVE, EVALUATE} state;
+typedef enum {START,INPUT, OPTION, CALC, SOLVE, EVALUATE, SYSEQUATION} state;
 
 typedef struct{
     Token *data;
@@ -24,8 +26,11 @@ typedef struct{
 
 int flag;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-float best_result = 0;
+float best_result = NAN;
 Token *output;
+
+pthread_t threads[NUM_THREAD];
+ThreadData args[NUM_THREAD];
 
 //5 luong cua 5 ham tiem nghiem
 // void* laguerre_thread(void* arg) {
@@ -94,13 +99,6 @@ void* secant_thread(void* arg) {
 }
 
 
-
-
-pthread_t threads[NUM_THREAD];
-ThreadData args[NUM_THREAD];
-
-
-
 void create_thread(){
     //pthread_create(&threads[0], NULL, laguerre_thread, &args[4]);
     pthread_create(&threads[1], NULL, newton_thread, &args[0]);
@@ -108,16 +106,38 @@ void create_thread(){
     pthread_create(&threads[3], NULL, brent_thread, &args[2]);
     pthread_create(&threads[4], NULL, secant_thread, &args[3]); 
 }
-    
 
 int main(){
-    state in_state = INPUT;
+    state in_state = START;
     float x;
     char str[MAX];
     char status;
     struct timespec start, end;
     while(1){
         switch(in_state){
+            case START:
+                printf("\nHI USER!");
+                do{
+                    printf("\nNHAN 1 CHO HE PHUONG TRINH, 2 CHO PHUONG TRINH ");
+                    scanf("%c",&status);
+                    while (getchar() != '\n');
+                }
+                while(status != '1' && status != '2');
+                if (status == '1') in_state = SYSEQUATION;
+                else if (status == '2') in_state = INPUT;
+                break;
+            case SYSEQUATION:
+                SystemEquation();
+                do{
+                    printf("\nNHAN 0 DE VE LAI TRANG THAI BAT DAU ");
+                    scanf(" %c",&status);
+                    while (getchar() != '\n');
+                }
+                while(status != '0');
+                printf("__________________________________________\n");
+                in_state = START;
+                break;
+
             case INPUT: 
                 // Giải phóng output cũ nếu có
                 if (output != NULL) {
@@ -125,7 +145,7 @@ int main(){
                     output = NULL;
                 }
                 
-                printf("nhập biểu thức: ");
+                printf("NHAP VAO BIEU THUC: ");
                 fgets(str, MAX, stdin);
                 str[strcspn(str, "\n")] = 0;
                 output = infixToPostfix(str);
@@ -145,9 +165,12 @@ int main(){
                 break;
 
             case OPTION:
-                printf("NHAN PHIM 1 DE TIM NGHIEM, PHIM 2 DE TINH GIA TRI ");
-                scanf("%c",&status);
-                while (getchar() != '\n');
+                do{
+                    printf("NHAN PHIM 1 DE TIM NGHIEM, PHIM 2 DE TINH GIA TRI ");
+                    scanf("%c",&status);
+                    while (getchar() != '\n');
+                }
+                while(status != '1' && status != '2');
                 if (status == '1') in_state = SOLVE;
                 else if (status == '2') in_state = CALC;
                 break;
@@ -162,15 +185,16 @@ int main(){
                 if (output != NULL) {
                     printTokens(output);
                     float result = evaluatePostfix(output, x);
-                    printf("Giá trị của biểu thức với x = %.5f là: %.5f\n", x, result);
+                    printf("GIA TRI CUA BIEU THUC VOI x = %.5f là: %.5f\n", x, result);
                 }
                 do{
-                    printf("NHAN 0 DE VE BUOC NHAP PHUONG TRINH ");
-                    scanf("%c",&status);
+                    printf("\nNHAN 0 DE VE LAI TRANG THAI BAT DAU ");
+                    scanf(" %c",&status);
                     while (getchar() != '\n');
                 }
                 while(status != '0');
-                in_state = INPUT;
+                printf("__________________________________________\n");
+                in_state = START;
                 break;
 
             case SOLVE:
@@ -180,6 +204,7 @@ int main(){
                     args[i].degree = degree;
                 }
                 flag = 0;
+                best_result = NAN;
                 // Tạo luồng xử lý
                 clock_gettime(CLOCK_MONOTONIC, &start);
                 create_thread();
@@ -190,17 +215,18 @@ int main(){
                 }
                 clock_gettime(CLOCK_MONOTONIC, &end);
                 double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
-                printf("\nThời gian tìm nghiệm: %f giây\n", elapsed);
+                printf("\nThời gian tìm nghiệm: %f giây", elapsed);
 
                 //printf("\nNGHIEM CUA BISECTION %f",bisectionMethod(output,-10,10));
-
+                if (isnan(best_result)) printf("\nPHUONG TRINH VO NGHIEM ");
                 do{
-                    printf("\nNHAN 0 DE VE BUOC NHAP PHUONG TRINH ");
+                    printf("\nNHAN 0 DE VE LAI TRANG THAI BAT DAU ");
                     scanf(" %c",&status);
                     while (getchar() != '\n');
                 }
                 while(status != '0');
-                in_state = INPUT;
+                printf("__________________________________________\n");
+                in_state = START;
                 break;
 
         }

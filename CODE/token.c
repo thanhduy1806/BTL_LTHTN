@@ -106,7 +106,7 @@ Token *infixToPostfix(char* myFunction){
             case S_OPERATOR: {
                 char operatorbuffer[5] = {0};  // Đủ chứa "atan", "sqrt"
                 int opLen = 0;
-                //printf("TOAN TU DANG XU LY: %c\n",*myFunction);
+                //KIEM TRA XEM TOAN TU DO NEU LA CHU CAI THI DOC TIEP CA 3 CHU NHET NO DO CAI MANG BUFFER
                 if (isalpha(*myFunction)){
                     while (opLen < 3) {
                         operatorbuffer[opLen++] = *myFunction;
@@ -115,9 +115,25 @@ Token *infixToPostfix(char* myFunction){
                     operatorbuffer[opLen] = '\0';  // Đảm bảo kết thúc chuỗi
                 }
                 //printf("TOAN TU LUONG GIAC: %s\n",operatorbuffer);
+
+                if (isTrigoFunction(operatorbuffer)) {  // Hàm sin, cos, tan
+                    char *trigoCopy = strdup(operatorbuffer);
+                    if (trigoCopy == NULL) {
+                        fprintf(stderr, "Memory allocation failed!\n");
+                        exit(1);
+                    }
+                    stack[++stackTop] = trigoCopy;
+                    break;
+                }
             
-                if (opLen == 0) {  // Toán tử bình thường (+, -, *, /)
+                if (opLen == 0) {  // Toán tử bình thường (+, -, *, /) THI CAI opLen NO KHONG TANG
                     char currentOp[2] = { *myFunction, '\0' };
+                    /*Dieu kien xet 3 cai && voi nhau la no phai co phan tu trong stack, phan tu do la toan tu binh thuong,
+                    va no xet truong hop nho phia trong la neu toan tu trong stack do uu tien cao hon cai dang xu ly hoac 
+                    co the do uu tien bang nhau nhung no khac ^ thi thoa cac dieu kien do de no pop khoi stack va push cai dang xu ly do
+                    (li do no phai khac ^ la neu no khac ^ thi no la toan tu u tien trai sang phai nen thuc hien binh thuong nen push do hoac pop ra binh thuong,
+                    ) 
+                    */
                     while (stackTop >= 0 && isOperator(stack[stackTop][0]) &&
                             ((precedence(stack[stackTop]) > precedence(currentOp)) ||
                             (precedence(stack[stackTop]) == precedence(currentOp) && currentOp[0] != '^'))) {
@@ -135,16 +151,6 @@ Token *infixToPostfix(char* myFunction){
                     stack[stackTop][1] = '\0';             // Kết thúc chuỗi
 
                     //printf("VALUE PUSH IN STACK %c\n",stack[stackTop]);
-                }
-            
-                else if (isTrigoFunction(operatorbuffer)) {  // Hàm sin, cos, tan
-                    char *trigoCopy = strdup(operatorbuffer);
-                    if (trigoCopy == NULL) {
-                        fprintf(stderr, "Memory allocation failed!\n");
-                        exit(1);
-                    }
-                    stack[++stackTop] = trigoCopy;
-                    continue;
                 }
             
                 if (*myFunction != '\0') {

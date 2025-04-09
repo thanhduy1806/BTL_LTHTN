@@ -81,7 +81,7 @@ int isDuplicate(float root) {
         }
     }
 
-    printf("X1 CUA BISECTION SAU KHI THU HEP %f\n",x1);
+    //printf("X1 CUA BISECTION SAU KHI THU HEP %f\n",x1);
 
     while (i < max){
 
