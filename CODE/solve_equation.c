@@ -65,7 +65,7 @@ int isDuplicate(float root) {
  float bisectionMethod(Token *postfix, float x1, float x2){
     float c;
     float fx1,fx2,fxc;
-    float step = 0.1;
+    float step = 0.123;
     int i = 0;
     int max = 100;
     fx1 = evaluatePostfix(postfix, x1);
@@ -81,12 +81,13 @@ int isDuplicate(float root) {
         }
     }
 
+    printf("X1 CUA BISECTION SAU KHI THU HEP %f\n",x1);
 
     while (i < max){
 
         c = (x1+x2)/2;
         fxc = evaluatePostfix(postfix, c);
-        if (fabs(fxc) < 1e-4){
+        if (fabs(fxc) < 1e-5){
             return c;
         }
         if (fx1*fxc < 0){
@@ -97,6 +98,7 @@ int isDuplicate(float root) {
             x1=c;
             fx1=fxc;
         }
+        else
         i++;
     }
     return NAN;

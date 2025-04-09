@@ -144,6 +144,7 @@ Token *infixToPostfix(char* myFunction){
                         exit(1);
                     }
                     stack[++stackTop] = trigoCopy;
+                    continue;
                 }
             
                 if (*myFunction != '\0') {

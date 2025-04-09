@@ -12,7 +12,7 @@
 #include "global_variable.h"
 #include "evaluate.h"
 #define MAX 100
-#define NUM_THREAD 5
+#define NUM_THREAD 4
 
 typedef enum {INPUT, OPTION, CALC, SOLVE, EVALUATE} state;
 
@@ -28,22 +28,22 @@ float best_result = 0;
 Token *output;
 
 //5 luong cua 5 ham tiem nghiem
-void* laguerre_thread(void* arg) {
-    ThreadData* args = (ThreadData*)arg;
-    args->result = Laguerre(args->data, args->degree, -2);
-    pthread_mutex_lock(&mutex);
-    if (flag == 0 && !isnan(args->result)){
-        flag = 1;   
-        best_result = args->result;
-        printf("NGHIEM TU LAGUERRE %f",best_result);
-    }
-    pthread_mutex_unlock(&mutex);
-    pthread_exit(NULL);
-}
+// void* laguerre_thread(void* arg) {
+//     ThreadData* args = (ThreadData*)arg;
+//     args->result = Laguerre(args->data, args->degree, -2);
+//     pthread_mutex_lock(&mutex);
+//     if (flag == 0 && !isnan(args->result)){
+//         flag = 1;   
+//         best_result = args->result;
+//         printf("NGHIEM TU LAGUERRE %f",best_result);
+//     }
+//     pthread_mutex_unlock(&mutex);
+//     pthread_exit(NULL);
+// }
 
 void* newton_thread(void* arg) {
     ThreadData* args = (ThreadData*)arg;
-    args->result = newtonRaphson(args->data, -1, args->degree);
+    args->result = newtonRaphson(args->data, 1, args->degree);
     pthread_mutex_lock(&mutex);
     if (flag == 0 && !isnan(args->result)){
         flag = 1;
@@ -102,11 +102,11 @@ ThreadData args[NUM_THREAD];
 
 
 void create_thread(){
-    pthread_create(&threads[0], NULL, laguerre_thread, &args[0]);
-    pthread_create(&threads[1], NULL, newton_thread, &args[1]);
-    pthread_create(&threads[2], NULL, bisection_thread, &args[2]);
-    pthread_create(&threads[3], NULL, brent_thread, &args[3]);
-    pthread_create(&threads[4], NULL, secant_thread, &args[4]); 
+    //pthread_create(&threads[0], NULL, laguerre_thread, &args[4]);
+    pthread_create(&threads[1], NULL, newton_thread, &args[0]);
+    pthread_create(&threads[2], NULL, bisection_thread, &args[1]);
+    pthread_create(&threads[3], NULL, brent_thread, &args[2]);
+    pthread_create(&threads[4], NULL, secant_thread, &args[3]); 
 }
     
 
@@ -153,7 +153,7 @@ int main(){
                 break;
             
             case CALC:
-                printf("NHAP VAO x");
+                printf("NHAP VAO x ");
                 scanf("%f",&x);
                 while (getchar() != '\n');
                 in_state = EVALUATE;
@@ -162,7 +162,7 @@ int main(){
                 if (output != NULL) {
                     printTokens(output);
                     float result = evaluatePostfix(output, x);
-                    printf("Giá trị của biểu thức với x = %.2f là: %.2f\n", x, result);
+                    printf("Giá trị của biểu thức với x = %.5f là: %.5f\n", x, result);
                 }
                 do{
                     printf("NHAN 0 DE VE BUOC NHAP PHUONG TRINH ");
@@ -191,6 +191,8 @@ int main(){
                 clock_gettime(CLOCK_MONOTONIC, &end);
                 double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
                 printf("\nThời gian tìm nghiệm: %f giây\n", elapsed);
+
+                //printf("\nNGHIEM CUA BISECTION %f",bisectionMethod(output,-10,10));
 
                 do{
                     printf("\nNHAN 0 DE VE BUOC NHAP PHUONG TRINH ");
